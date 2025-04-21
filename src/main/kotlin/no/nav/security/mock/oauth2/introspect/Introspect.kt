@@ -30,17 +30,19 @@ internal fun Route.Builder.introspect(tokenProvider: OAuth2TokenProvider) =
             json(
                 IntrospectResponse(
                     true,
-                    claims["scope"].toString(),
-                    claims["client_id"].toString(),
-                    claims["username"].toString(),
-                    claims["token_type"].toString(),
+                    claims["scope"]?.toString(),
+                    claims["client_id"]?.toString(),
+                    claims["username"]?.toString(),
+                    claims["token_type"]?.toString(),
                     claims["exp"] as? Long,
                     claims["iat"] as? Long,
                     claims["nbf"] as? Long,
-                    claims["sub"].toString(),
-                    claims["aud"].toString(),
-                    claims["iss"].toString(),
-                    claims["jti"].toString(),
+                    claims["sub"]?.toString(),
+                    claims["aud"]?.toString(),
+                    claims["iss"]?.toString(),
+                    claims["jti"]?.toString(),
+                    claims["uid"]?.toString(),
+                    claims["email"]?.toString(),
                 ),
             )
         } ?: json(IntrospectResponse(false))
@@ -96,4 +98,8 @@ data class IntrospectResponse(
     val iss: String? = null,
     @JsonProperty("jti")
     val jti: String? = null,
+    @JsonProperty("uid")
+    val uid: String? = null,
+    @JsonProperty("email")
+    val email: String? = null,
 )

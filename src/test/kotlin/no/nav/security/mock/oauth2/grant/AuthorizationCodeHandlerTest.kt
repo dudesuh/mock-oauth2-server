@@ -98,7 +98,7 @@ internal class AuthorizationCodeHandlerTest {
         val code: String = handler.retrieveAuthorizationCode(Login("foo", claimsValue))
 
         handler.tokenResponse(tokenRequest(code = code), "http://myissuer".toHttpUrl(), DefaultOAuth2TokenCallback()).asClue {
-            SignedJWT.parse(it.idToken).claims.count() shouldBe 10
+            SignedJWT.parse(it.idToken).claims.count() shouldBe 11
         }
     }
 

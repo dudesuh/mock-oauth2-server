@@ -10,6 +10,7 @@ import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier
 import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
@@ -18,6 +19,7 @@ import com.nimbusds.oauth2.sdk.TokenRequest
 import no.nav.security.mock.oauth2.OAuth2Exception
 import no.nav.security.mock.oauth2.extensions.clientIdAsString
 import no.nav.security.mock.oauth2.extensions.issuerId
+import no.nav.security.mock.oauth2.grant.subjectToken
 import okhttp3.HttpUrl
 import java.time.Duration
 import java.time.Instant
@@ -56,7 +58,7 @@ class OAuth2TokenProvider
             oAuth2TokenCallback.subject(tokenRequest),
             listOf(tokenRequest.clientIdAsString()),
             nonce,
-            oAuth2TokenCallback.addClaims(tokenRequest),
+            oAuth2TokenCallback.addClaims(tokenRequest).plus(Pair("email", oAuth2TokenCallback.subject(tokenRequest) + "@email.com")),
             oAuth2TokenCallback.tokenExpiry(),
         ).sign(issuerUrl.issuerId(), oAuth2TokenCallback.typeHeader(tokenRequest))
 
@@ -65,14 +67,21 @@ class OAuth2TokenProvider
             issuerUrl: HttpUrl,
             oAuth2TokenCallback: OAuth2TokenCallback,
             nonce: String? = null,
-        ) = defaultClaims(
-            issuerUrl,
-            oAuth2TokenCallback.subject(tokenRequest),
-            oAuth2TokenCallback.audience(tokenRequest),
-            nonce,
-            oAuth2TokenCallback.addClaims(tokenRequest),
-            oAuth2TokenCallback.tokenExpiry(),
-        ).sign(issuerUrl.issuerId(), oAuth2TokenCallback.typeHeader(tokenRequest))
+        ): SignedJWT {
+            val subject = oAuth2TokenCallback.subject(tokenRequest)
+            val claims = oAuth2TokenCallback.addClaims(tokenRequest).plus(Pair("client_id", tokenRequest.clientIdAsString()))
+            if (subject != null) {
+                claims.plus(Pair("uid", oAuth2TokenCallback.subject(tokenRequest)))
+            }
+            return defaultClaims(
+                issuerUrl,
+                oAuth2TokenCallback.subject(tokenRequest),
+                oAuth2TokenCallback.audience(tokenRequest),
+                nonce,
+                claims,
+                oAuth2TokenCallback.tokenExpiry(),
+            ).sign(issuerUrl.issuerId(), oAuth2TokenCallback.typeHeader(tokenRequest))
+        }
 
         fun exchangeAccessToken(
             tokenRequest: TokenRequest,
