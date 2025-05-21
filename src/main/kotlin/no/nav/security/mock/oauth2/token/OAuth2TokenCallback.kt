@@ -25,7 +25,7 @@ interface OAuth2TokenCallback {
     fun tokenExpiry(): Long
 }
 
-// TODO: for JwtBearerGrant and TokenExchange should be able to ovverride sub, make sub nullable and return some default
+// TODO: for JwtBearerGrant and TokenExchange should be able to override sub, make sub nullable and return some default
 open class DefaultOAuth2TokenCallback
     @JvmOverloads
     constructor(

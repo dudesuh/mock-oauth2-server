@@ -10,7 +10,6 @@ import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier
 import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
@@ -19,12 +18,11 @@ import com.nimbusds.oauth2.sdk.TokenRequest
 import no.nav.security.mock.oauth2.OAuth2Exception
 import no.nav.security.mock.oauth2.extensions.clientIdAsString
 import no.nav.security.mock.oauth2.extensions.issuerId
-import no.nav.security.mock.oauth2.grant.subjectToken
 import okhttp3.HttpUrl
 import java.time.Duration
 import java.time.Instant
-import java.util.Date
-import java.util.UUID
+import java.util.*
+import kotlin.collections.HashSet
 
 typealias TimeProvider = () -> Instant?
 
@@ -58,7 +56,7 @@ class OAuth2TokenProvider
             oAuth2TokenCallback.subject(tokenRequest),
             listOf(tokenRequest.clientIdAsString()),
             nonce,
-            oAuth2TokenCallback.addClaims(tokenRequest).plus(Pair("email", oAuth2TokenCallback.subject(tokenRequest) + "@email.com")),
+            oAuth2TokenCallback.addClaims(tokenRequest),
             oAuth2TokenCallback.tokenExpiry(),
         ).sign(issuerUrl.issuerId(), oAuth2TokenCallback.typeHeader(tokenRequest))
 
@@ -67,11 +65,17 @@ class OAuth2TokenProvider
             issuerUrl: HttpUrl,
             oAuth2TokenCallback: OAuth2TokenCallback,
             nonce: String? = null,
+            scope: List<String>? = Collections.emptyList()
         ): SignedJWT {
             val subject = oAuth2TokenCallback.subject(tokenRequest)
-            val claims = oAuth2TokenCallback.addClaims(tokenRequest).plus(Pair("client_id", tokenRequest.clientIdAsString()))
+            var claims = oAuth2TokenCallback.addClaims(tokenRequest)
+                .plus(Pair("client_id", tokenRequest.clientIdAsString()))
+                .plus(Pair("scope", scope ?: Collections.emptyList()))
             if (subject != null) {
-                claims.plus(Pair("uid", oAuth2TokenCallback.subject(tokenRequest)))
+                claims = claims.plus(Pair("uid", oAuth2TokenCallback.subject(tokenRequest)))
+                if (scope?.contains("email") == true){
+                    claims = claims.plus(Pair("email", oAuth2TokenCallback.subject(tokenRequest) + "@email.com"));
+                }
             }
             return defaultClaims(
                 issuerUrl,

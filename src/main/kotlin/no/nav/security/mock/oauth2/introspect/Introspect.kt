@@ -30,7 +30,7 @@ internal fun Route.Builder.introspect(tokenProvider: OAuth2TokenProvider) =
             json(
                 IntrospectResponse(
                     true,
-                    claims["scope"]?.toString(),
+                    (claims["scope"] as? List<*>)?.joinToString(" "),
                     claims["client_id"]?.toString(),
                     claims["username"]?.toString(),
                     claims["token_type"]?.toString(),

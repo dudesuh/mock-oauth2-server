@@ -21,6 +21,7 @@ import no.nav.security.mock.oauth2.login.Login
 import no.nav.security.mock.oauth2.token.OAuth2TokenCallback
 import no.nav.security.mock.oauth2.token.OAuth2TokenProvider
 import okhttp3.HttpUrl
+import java.util.stream.Collectors
 import kotlin.collections.set
 
 private val log = KotlinLogging.logger {}
@@ -77,7 +78,8 @@ internal class AuthorizationCodeHandler(
         val nonce: String? = authenticationRequest?.nonce?.value
         val loginTokenCallbackOrDefault = getLoginTokenCallbackOrDefault(code, oAuth2TokenCallback)
         val idToken: SignedJWT = tokenProvider.idToken(tokenRequest, issuerUrl, loginTokenCallbackOrDefault, nonce)
-        val accessToken: SignedJWT = tokenProvider.accessToken(tokenRequest, issuerUrl, loginTokenCallbackOrDefault, nonce)
+        val accessToken: SignedJWT = tokenProvider.accessToken(tokenRequest, issuerUrl, loginTokenCallbackOrDefault, nonce,
+            authenticationRequest?.scope?.stream()?.map { it.value }?.collect(Collectors.toList()))
         val refreshToken: RefreshToken = refreshTokenManager.refreshToken(loginTokenCallbackOrDefault, nonce)
 
         return OAuth2TokenResponse(
